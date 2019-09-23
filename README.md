@@ -1,9 +1,13 @@
 # SAC+AE implementaiton in PyTorch
 
 ## Requirements
-The simplest way to install all required dependencies is to create an anaconda environment by running:
+We assume you have access to a gpu that can run CUDA 9.2. Then, the simplest way to install all required dependencies is to create an anaconda environment by running:
 ```
 conda env create -f conda_env.yml
+```
+After the instalation ends you can activate your environment with:
+```
+source activate pytorch_sac_ae
 ```
 
 ## Instructions
