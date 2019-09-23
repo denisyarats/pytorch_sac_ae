@@ -24,17 +24,17 @@ python train.py \
     --work_dir ./log \
     --seed 1
 ```
-This will produce a folder (`./save`) by default, where all the output is going to be stored including train/eval logs, tensorboard blobs, evaluation videos, and model snapshots. It is possible to attach tensorboard to a particular run using the following command:
+This will produce 'log' folder, where all the outputs are going to be stored including train/eval logs, tensorboard blobs, and evaluation episode videos. One can attacha tensorboard to monitor training by running:
 ```
-tensorboard --logdir save
+tensorboard --logdir log
 ```
-Then open up tensorboad in your browser.
+and opening up tensorboad in your browser.
 
-You will also see some console output, something like this:
+The console output is also available in a form:
 ```
 | train | E: 1 | S: 1000 | D: 0.8 s | R: 0.0000 | BR: 0.0000 | ALOSS: 0.0000 | CLOSS: 0.0000 | RLOSS: 0.0000
 ```
-This line means:
+a training entry decodes as:
 ```
 train - training episode
 E - total number of episodes 
@@ -46,8 +46,7 @@ ALOSS - average loss of actor
 CLOSS - average loss of critic
 RLOSS - average reconstruction loss (only if is trained from pixels and decoder)
 ```
-These are just the most important number, more of all other metrics can be found in tensorboard.
-Also, besides training, once in a while there is evaluation output, like this:
+and an evaluation entry :
 ```
 | eval | S: 0 | ER: 21.1676
 ```
