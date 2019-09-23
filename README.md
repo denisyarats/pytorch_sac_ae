@@ -46,47 +46,8 @@ ALOSS - average loss of actor
 CLOSS - average loss of critic
 RLOSS - average reconstruction loss (only if is trained from pixels and decoder)
 ```
-and an evaluation entry :
+while an evaluation entry:
 ```
 | eval | S: 0 | ER: 21.1676
 ```
-Which just tells the expected reward `ER` evaluating current policy after `S` steps. Note that `ER` is average evaluation performance over `num_eval_episodes` episodes (usually 10).
-
-## Running on the cluster
-You can find the `run_cluster.sh` script file that allows you run training on the cluster. It is a simple bash script, that is super easy to modify. We usually run 10 different seeds for each configuration to get reliable results. For example to schedule 10 runs of `walker walk` simple do this:
-```
-./run_cluster.sh walker walk
-```
-This script will schedule 10 jobs and all the output will be stored under `./runs/walker_walk/{configuration_name}/seed_i`. The folder structure looks like this:
-```
-runs/
-  walker_walk/
-    sac_states/
-      seed_1/
-        id # slurm job id
-        stdout # standard output of your job
-        stderr # standard error of your jobs
-        run.sh # starting script
-        run.slrm # slurm script
-        eval.log # log file for evaluation
-        train.log # log file for training
-        tb/ # folder that stores tensorboard output
-        video/ # folder stores evaluation videos
-          10000.mp4 # video of one episode after 10000 steps
-      seed_2/
-      ...
-```
-Again, you can attach tensorboard to a particular configuration, for example:
-```
-tensorboard --logdir runs/walker_walk/sac_states
-```
-
-For convinience, you can also use an iPython notebook to get aggregated over 10 seeds results. An example of such notebook is `runs.ipynb`
-
-
-## Run entire testbed
-Another scirpt that allow to run all 10 dm_control task on the cluster is here:
-```
-./run_all.sh
-```
-It will call `run_cluster.sh` for each task, so you only need to modify `run_cluster.sh` to change the hyper parameters.
+which just tells the expected reward `ER` evaluating current policy after `S` steps. Note that `ER` is average evaluation performance over `num_eval_episodes` episodes (usually 10).
