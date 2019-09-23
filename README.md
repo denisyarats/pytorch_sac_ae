@@ -1,6 +1,10 @@
 # SAC+AE implementaiton in PyTorch
 
 ## Requirements
+The simplest way to install all required dependencies is to create an anaconda environment by running:
+```
+conda env create -f conda_env.yml
+```
 
 ## Instructions
 To train an SAC+AE agent on the `cheetah run` task from image-based observations  run:
@@ -13,7 +17,7 @@ python train.py \
     --action_repeat 4 \
     --save_video \
     --save_tb \
-    --work_dir ./runs/cheetah_run/sac_ae \
+    --work_dir ./log \
     --seed 1
 ```
 This will produce a folder (`./save`) by default, where all the output is going to be stored including train/eval logs, tensorboard blobs, evaluation videos, and model snapshots. It is possible to attach tensorboard to a particular run using the following command:
