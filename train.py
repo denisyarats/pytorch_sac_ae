@@ -95,11 +95,10 @@ def evaluate(env, agent, video, num_episodes, L, step):
     L.dump(step)
 
 
-def make_agent(obs_shape, state_shape, action_shape, args, device):
+def make_agent(obs_shape, action_shape, args, device):
     if args.agent == 'sac_ae':
         return SacAeAgent(
             obs_shape=obs_shape,
-            state_shape=state_shape,
             action_shape=action_shape,
             device=device,
             hidden_dim=args.hidden_dim,
