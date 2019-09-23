@@ -13,21 +13,13 @@ OUT_DIM = {2: 39, 4: 35, 6: 31}
 
 class PixelEncoder(nn.Module):
     """Convolutional encoder of pixels observations."""
-    def __init__(
-        self,
-        obs_shape,
-        feature_dim,
-        num_layers=2,
-        num_filters=32,
-        stochastic=False
-    ):
+    def __init__(self, obs_shape, feature_dim, num_layers=2, num_filters=32):
         super().__init__()
 
         assert len(obs_shape) == 3
 
         self.feature_dim = feature_dim
         self.num_layers = num_layers
-        self.stochastic = stochastic
 
         self.convs = nn.ModuleList(
             [nn.Conv2d(obs_shape[0], num_filters, 3, stride=2)]
@@ -38,13 +30,6 @@ class PixelEncoder(nn.Module):
         out_dim = OUT_DIM[num_layers]
         self.fc = nn.Linear(num_filters * out_dim * out_dim, self.feature_dim)
         self.ln = nn.LayerNorm(self.feature_dim)
-
-        if self.stochastic:
-            self.log_std_min = -10
-            self.log_std_max = 2
-            self.fc_log_std = nn.Linear(
-                num_filters * out_dim * out_dim, self.feature_dim
-            )
 
         self.outputs = dict()
 
@@ -80,17 +65,6 @@ class PixelEncoder(nn.Module):
         self.outputs['ln'] = h_norm
 
         out = torch.tanh(h_norm)
-
-        if self.stochastic:
-            self.outputs['mu'] = out
-            log_std = torch.tanh(self.fc_log_std(h))
-            # normalize
-            log_std = self.log_std_min + 0.5 * (
-                self.log_std_max - self.log_std_min
-            ) * (log_std + 1)
-            out = self.reparameterize(out, log_std)
-            self.outputs['log_std'] = log_std
-
         self.outputs['tanh'] = out
 
         return out
@@ -116,42 +90,8 @@ class PixelEncoder(nn.Module):
         L.log_param('train_encoder/ln', self.ln, step)
 
 
-class StateEncoder(nn.Module):
-    def __init__(self, obs_shape, feature_dim):
-        super().__init__()
-
-        assert len(obs_shape) == 1
-        self.feature_dim = feature_dim
-
-        self.trunk = nn.Sequential(
-            nn.Linear(obs_shape[0], 256), nn.ReLU(),
-            nn.Linear(256, feature_dim), nn.ReLU()
-        )
-
-        self.outputs = dict()
-
-    def forward(self, obs, detach=False):
-        h = self.trunk(obs)
-        if detach:
-            h = h.detach()
-        self.outputs['h'] = h
-        return h
-
-    def copy_conv_weights_from(self, source):
-        pass
-
-    def log(self, L, step, log_freq):
-        if step % log_freq != 0:
-            return
-
-        L.log_param('train_encoder/fc1', self.trunk[0], step)
-        L.log_param('train_encoder/fc2', self.trunk[2], step)
-        for k, v in self.outputs.items():
-            L.log_histogram('train_encoder/%s_hist' % k, v, step)
-
-
 class IdentityEncoder(nn.Module):
-    def __init__(self, obs_shape, feature_dim):
+    def __init__(self, obs_shape, feature_dim, num_layers, num_filters):
         super().__init__()
 
         assert len(obs_shape) == 1
@@ -167,19 +107,13 @@ class IdentityEncoder(nn.Module):
         pass
 
 
-_AVAILABLE_ENCODERS = {
-    'pixel': PixelEncoder,
-    'state': StateEncoder,
-    'identity': IdentityEncoder
-}
+_AVAILABLE_ENCODERS = {'pixel': PixelEncoder, 'identity': IdentityEncoder}
 
 
 def make_encoder(
-    encoder_type, obs_shape, feature_dim, num_layers, num_filters, stochastic
+    encoder_type, obs_shape, feature_dim, num_layers, num_filters
 ):
     assert encoder_type in _AVAILABLE_ENCODERS
-    if encoder_type == 'pixel':
-        return _AVAILABLE_ENCODERS[encoder_type](
-            obs_shape, feature_dim, num_layers, num_filters, stochastic
-        )
-    return _AVAILABLE_ENCODERS[encoder_type](obs_shape, feature_dim)
+    return _AVAILABLE_ENCODERS[encoder_type](
+        obs_shape, feature_dim, num_layers, num_filters
+    )

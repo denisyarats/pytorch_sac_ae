@@ -1,10 +1,20 @@
-# Soft Actor-Critic implementaiton in PyTorch
+# SAC+AE implementaiton in PyTorch
 
+## Requirements
 
-## Running locally
-To train SAC locally one can use provided `run_local.sh` script (change it to modify particular arguments):
+## Instructions
+To train an SAC+AE agent on the `cheetah run` task from image-based observations  run:
 ```
-./run_local.sh
+python train.py \
+    --domain_name cheetah \
+    --task_name run \
+    --encoder_type pixel \
+    --decoder_type pixel \
+    --action_repeat 4 \
+    --save_video \
+    --save_tb \
+    --work_dir ./runs/cheetah_run/sac_ae \
+    --seed 1
 ```
 This will produce a folder (`./save`) by default, where all the output is going to be stored including train/eval logs, tensorboard blobs, evaluation videos, and model snapshots. It is possible to attach tensorboard to a particular run using the following command:
 ```

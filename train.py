@@ -15,9 +15,7 @@ import utils
 from logger import Logger
 from video import VideoRecorder
 
-from sac import SACAgent
-from td3 import TD3Agent
-from ddpg import DDPGAgent
+from sac_ae import SacAeAgent
 
 
 def parse_args():
@@ -31,7 +29,7 @@ def parse_args():
     # replay buffer
     parser.add_argument('--replay_buffer_capacity', default=1000000, type=int)
     # train
-    parser.add_argument('--agent', default='sac', type=str)
+    parser.add_argument('--agent', default='sac_ae', type=str)
     parser.add_argument('--init_steps', default=1000, type=int)
     parser.add_argument('--num_train_steps', default=1000000, type=int)
     parser.add_argument('--batch_size', default=512, type=int)
@@ -51,30 +49,22 @@ def parse_args():
     parser.add_argument('--actor_log_std_max', default=2, type=float)
     parser.add_argument('--actor_update_freq', default=2, type=int)
     # encoder/decoder
-    parser.add_argument('--encoder_type', default='identity', type=str)
+    parser.add_argument('--encoder_type', default='pixel', type=str)
     parser.add_argument('--encoder_feature_dim', default=50, type=int)
     parser.add_argument('--encoder_lr', default=1e-3, type=float)
     parser.add_argument('--encoder_tau', default=0.005, type=float)
-    parser.add_argument('--decoder_type', default='identity', type=str)
+    parser.add_argument('--decoder_type', default='pixel', type=str)
     parser.add_argument('--decoder_lr', default=1e-3, type=float)
     parser.add_argument('--decoder_update_freq', default=1, type=int)
     parser.add_argument('--decoder_latent_lambda', default=0.0, type=float)
     parser.add_argument('--decoder_weight_lambda', default=0.0, type=float)
-    parser.add_argument('--decoder_kl_lambda', default=0.0, type=float)
     parser.add_argument('--num_layers', default=4, type=int)
     parser.add_argument('--num_filters', default=32, type=int)
-    parser.add_argument('--freeze_encoder', default=False, action='store_true')
-    parser.add_argument('--use_dynamics', default=False, action='store_true')
     # sac
     parser.add_argument('--discount', default=0.99, type=float)
     parser.add_argument('--init_temperature', default=0.01, type=float)
     parser.add_argument('--alpha_lr', default=1e-3, type=float)
     parser.add_argument('--alpha_beta', default=0.9, type=float)
-    # td3
-    parser.add_argument('--policy_noise', default=0.2, type=float)
-    parser.add_argument('--expl_noise', default=0.1, type=float)
-    parser.add_argument('--noise_clip', default=0.5, type=float)
-    parser.add_argument('--tau', default=0.005, type=float)
     # misc
     parser.add_argument('--seed', default=1, type=int)
     parser.add_argument('--work_dir', default='.', type=str)
@@ -82,8 +72,6 @@ def parse_args():
     parser.add_argument('--save_model', default=False, action='store_true')
     parser.add_argument('--save_buffer', default=False, action='store_true')
     parser.add_argument('--save_video', default=False, action='store_true')
-    parser.add_argument('--pretrained_info', default=None, type=str)
-    parser.add_argument('--pretrained_decoder', default=False, action='store_true')
 
     args = parser.parse_args()
     return args
@@ -108,8 +96,8 @@ def evaluate(env, agent, video, num_episodes, L, step):
 
 
 def make_agent(obs_shape, state_shape, action_shape, args, device):
-    if args.agent == 'sac':
-        return SACAgent(
+    if args.agent == 'sac_ae':
+        return SacAeAgent(
             obs_shape=obs_shape,
             state_shape=state_shape,
             action_shape=action_shape,
@@ -137,61 +125,11 @@ def make_agent(obs_shape, state_shape, action_shape, args, device):
             decoder_update_freq=args.decoder_update_freq,
             decoder_latent_lambda=args.decoder_latent_lambda,
             decoder_weight_lambda=args.decoder_weight_lambda,
-            decoder_kl_lambda=args.decoder_kl_lambda,
             num_layers=args.num_layers,
-            num_filters=args.num_filters,
-            freeze_encoder=args.freeze_encoder,
-            use_dynamics=args.use_dynamics
-        )
-    elif args.agent == 'td3':
-        return TD3Agent(
-            obs_shape=obs_shape,
-            action_shape=action_shape,
-            device=device,
-            discount=args.discount,
-            tau=args.tau,
-            policy_noise=args.policy_noise,
-            noise_clip=args.noise_clip,
-            expl_noise=args.expl_noise,
-            actor_lr=args.actor_lr,
-            critic_lr=args.critic_lr,
-            encoder_type=args.encoder_type,
-            encoder_feature_dim=args.encoder_feature_dim,
-            actor_update_freq=args.actor_update_freq,
-            target_update_freq=args.critic_target_update_freq
-        )
-    elif args.agent == 'ddpg':
-        return DDPGAgent(
-            obs_shape=obs_shape,
-            action_shape=action_shape,
-            device=device,
-            discount=args.discount,
-            tau=args.tau,
-            actor_lr=args.actor_lr,
-            critic_lr=args.critic_lr,
-            encoder_type=args.encoder_type,
-            encoder_feature_dim=args.encoder_feature_dim
+            num_filters=args.num_filters
         )
     else:
         assert 'agent is not supported: %s' % args.agent
-
-
-def load_pretrained_encoder(agent, pretrained_info, pretrained_decoder):
-    path, version = pretrained_info.split(':')
-
-    pretrained_agent = copy.deepcopy(agent)
-    pretrained_agent.load(path, int(version))
-    agent.critic.encoder.load_state_dict(
-        pretrained_agent.critic.encoder.state_dict()
-    )
-    agent.actor.encoder.load_state_dict(
-        pretrained_agent.actor.encoder.state_dict()
-    )
-
-    if pretrained_decoder:
-        agent.decoder.load_state_dict(pretrained_agent.decoder.state_dict())
-
-    return agent
 
 
 def main():
@@ -232,7 +170,6 @@ def main():
 
     replay_buffer = utils.ReplayBuffer(
         obs_shape=env.observation_space.shape,
-        state_shape=env.state_space.shape,
         action_shape=env.action_space.shape,
         capacity=args.replay_buffer_capacity,
         batch_size=args.batch_size,
@@ -241,16 +178,10 @@ def main():
 
     agent = make_agent(
         obs_shape=env.observation_space.shape,
-        state_shape=env.state_space.shape,
         action_shape=env.action_space.shape,
         args=args,
         device=device
     )
-
-    if args.pretrained_info is not None:
-        agent = load_pretrained_encoder(
-            agent, args.pretrained_info, args.pretrained_decoder
-        )
 
     L = Logger(args.work_dir, use_tb=args.save_tb)
 
@@ -295,9 +226,7 @@ def main():
             for _ in range(num_updates):
                 agent.update(replay_buffer, L, step)
 
-        state = env.env.env._current_state
         next_obs, reward, done, _ = env.step(action)
-        next_state = env.env.env._current_state.shape
 
         # allow infinit bootstrap
         done_bool = 0 if episode_step + 1 == env._max_episode_steps else float(
@@ -305,7 +234,7 @@ def main():
         )
         episode_reward += reward
 
-        replay_buffer.add(obs, action, reward, next_obs, done_bool, state, next_state)
+        replay_buffer.add(obs, action, reward, next_obs, done_bool)
 
         obs = next_obs
         episode_step += 1

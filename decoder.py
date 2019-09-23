@@ -62,45 +62,13 @@ class PixelDecoder(nn.Module):
         L.log_param('train_decoder/fc', self.fc, step)
 
 
-class StateDecoder(nn.Module):
-    def __init__(self, obs_shape, feature_dim):
-        super().__init__()
-
-        assert len(obs_shape) == 1
-
-        self.trunk = nn.Sequential(
-            nn.Linear(feature_dim, 1024), nn.ReLU(), nn.Linear(1024, 1024),
-            nn.ReLU(), nn.Linear(1024, obs_shape[0]), nn.ReLU()
-        )
-
-        self.outputs = dict()
-
-    def forward(self, obs, detach=False):
-        h = self.trunk(obs)
-        if detach:
-            h = h.detach()
-        self.outputs['h'] = h
-        return h
-
-    def log(self, L, step, log_freq):
-        if step % log_freq != 0:
-            return
-
-        L.log_param('train_encoder/fc1', self.trunk[0], step)
-        L.log_param('train_encoder/fc2', self.trunk[2], step)
-        for k, v in self.outputs.items():
-            L.log_histogram('train_encoder/%s_hist' % k, v, step)
-
-
-_AVAILABLE_DECODERS = {'pixel': PixelDecoder, 'state': StateDecoder}
+_AVAILABLE_DECODERS = {'pixel': PixelDecoder}
 
 
 def make_decoder(
     decoder_type, obs_shape, feature_dim, num_layers, num_filters
 ):
     assert decoder_type in _AVAILABLE_DECODERS
-    if decoder_type == 'pixel':
-        return _AVAILABLE_DECODERS[decoder_type](
-            obs_shape, feature_dim, num_layers, num_filters
-        )
-    return _AVAILABLE_DECODERS[decoder_type](obs_shape, feature_dim)
+    return _AVAILABLE_DECODERS[decoder_type](
+        obs_shape, feature_dim, num_layers, num_filters
+    )

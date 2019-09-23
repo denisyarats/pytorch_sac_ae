@@ -215,8 +215,8 @@ class Critic(nn.Module):
             L.log_param('train_critic/q2_fc%d' % i, self.Q2.trunk[i * 2], step)
 
 
-class SACAgent(object):
-    """Soft Actor-Critic algorithm."""
+class SacAeAgent(object):
+    """SAC+AE algorithm."""
     def __init__(
         self,
         obs_shape,
@@ -237,20 +237,17 @@ class SACAgent(object):
         critic_beta=0.9,
         critic_tau=0.005,
         critic_target_update_freq=2,
-        encoder_type='identity',
+        encoder_type='pixel',
         encoder_feature_dim=50,
         encoder_lr=1e-3,
         encoder_tau=0.005,
-        decoder_type='identity',
+        decoder_type='pixel',
         decoder_lr=1e-3,
         decoder_update_freq=1,
         decoder_latent_lambda=0.0,
         decoder_weight_lambda=0.0,
-        decoder_kl_lambda=0.0,
         num_layers=4,
-        num_filters=32,
-        freeze_encoder=False,
-        use_dynamics=False
+        num_filters=32
     ):
         self.device = device
         self.discount = discount
@@ -260,11 +257,6 @@ class SACAgent(object):
         self.critic_target_update_freq = critic_target_update_freq
         self.decoder_update_freq = decoder_update_freq
         self.decoder_latent_lambda = decoder_latent_lambda
-        self.decoder_kl_lambda = decoder_kl_lambda
-        self.decoder_type = decoder_type
-        self.use_dynamics = use_dynamics
-
-        stochastic = decoder_kl_lambda > 0.0
 
         self.actor = Actor(
             obs_shape, action_shape, hidden_dim, encoder_type,
@@ -420,9 +412,6 @@ class SACAgent(object):
         self.log_alpha_optimizer.step()
 
     def update_decoder(self, obs, target_obs, L, step):
-        if self.decoder is None:
-            return
-
         h = self.critic.encoder(obs)
 
         if target_obs.dim() == 4:
@@ -477,9 +466,8 @@ class SACAgent(object):
                 self.encoder_tau
             )
 
-        if step % self.decoder_update_freq == 0:
-            target = obs if self.decoder_type == 'pixel' else state
-            self.update_decoder(obs, target, L, step)
+        if self.decoder is None and step % self.decoder_update_freq == 0:
+            self.update_decoder(obs, obs, L, step)
 
     def save(self, model_dir, step):
         torch.save(

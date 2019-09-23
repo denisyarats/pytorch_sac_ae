@@ -67,10 +67,7 @@ def preprocess_obs(obs, bits=5):
 
 class ReplayBuffer(object):
     """Buffer to store environment transitions."""
-    def __init__(
-        self, obs_shape, state_shape, action_shape, capacity, batch_size,
-        device
-    ):
+    def __init__(self, obs_shape, action_shape, capacity, batch_size, device):
         self.capacity = capacity
         self.batch_size = batch_size
         self.device = device
@@ -83,21 +80,17 @@ class ReplayBuffer(object):
         self.actions = np.empty((capacity, *action_shape), dtype=np.float32)
         self.rewards = np.empty((capacity, 1), dtype=np.float32)
         self.not_dones = np.empty((capacity, 1), dtype=np.float32)
-        self.states = np.empty((capacity, *state_shape), dtype=np.float32)
-        self.next_states = np.empty((capacity, *state_shape), dtype=np.float32)
 
         self.idx = 0
         self.last_save = 0
         self.full = False
 
-    def add(self, obs, action, reward, next_obs, done, state, next_state):
+    def add(self, obs, action, reward, next_obs, done):
         np.copyto(self.obses[self.idx], obs)
         np.copyto(self.actions[self.idx], action)
         np.copyto(self.rewards[self.idx], reward)
         np.copyto(self.next_obses[self.idx], next_obs)
         np.copyto(self.not_dones[self.idx], not done)
-        np.copyto(self.states[self.idx], state)
-        np.copyto(self.next_states[self.idx], next_state)
 
         self.idx = (self.idx + 1) % self.capacity
         self.full = self.full or self.idx == 0
@@ -114,9 +107,8 @@ class ReplayBuffer(object):
             self.next_obses[idxs], device=self.device
         ).float()
         not_dones = torch.as_tensor(self.not_dones[idxs], device=self.device)
-        states = torch.as_tensor(self.states[idxs], device=self.device)
 
-        return obses, actions, rewards, next_obses, not_dones, states
+        return obses, actions, rewards, next_obses, not_dones
 
     def save(self, save_dir):
         if self.idx == self.last_save:
@@ -127,9 +119,7 @@ class ReplayBuffer(object):
             self.next_obses[self.last_save:self.idx],
             self.actions[self.last_save:self.idx],
             self.rewards[self.last_save:self.idx],
-            self.not_dones[self.last_save:self.idx],
-            self.states[self.last_save:self.idx],
-            self.next_states[self.last_save:self.idx]
+            self.not_dones[self.last_save:self.idx]
         ]
         self.last_save = self.idx
         torch.save(payload, path)
@@ -147,8 +137,6 @@ class ReplayBuffer(object):
             self.actions[start:end] = payload[2]
             self.rewards[start:end] = payload[3]
             self.not_dones[start:end] = payload[4]
-            self.states[start:end] = payload[5]
-            self.next_states[start:end] = payload[6]
             self.idx = end
 
 
