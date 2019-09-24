@@ -412,7 +412,7 @@ class SacAeAgent(object):
                 self.encoder_tau
             )
 
-        if self.decoder is None and step % self.decoder_update_freq == 0:
+        if self.decoder is not None and step % self.decoder_update_freq == 0:
             self.update_decoder(obs, obs, L, step)
 
     def save(self, model_dir, step):
