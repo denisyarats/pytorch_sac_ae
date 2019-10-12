@@ -59,3 +59,9 @@ while an evaluation entry:
 | eval | S: 0 | ER: 21.1676
 ```
 which just tells the expected reward `ER` evaluating current policy after `S` steps. Note that `ER` is average evaluation performance over `num_eval_episodes` episodes (usually 10).
+
+## Results
+Our method demonstrates significantly improved performance over the baseline SAC:pixel. It matches the state-of-the-art performance of model-based algorithms, such as PlaNet (Hafner et al., 2018) and SLAC (Lee et al., 2019), as well
+as a model-free algorithm D4PG (Barth-Maron et al., 2018), that also learns from raw images. Our
+algorithm exhibits stable learning across ten random seeds and is extremely easy to implement.
+![Results](https://lh5.googleusercontent.com/Q2sYkdKmNa7qgUX-XaH3i2Nl2b-YtcAnjTXfi46Abp_F2L2IgAelgEp6iqbK6RaJI0xt886yJM_92G5E9osCIQK_QgGnJntn41CdsxCHC76wjSxIZGM=w1175)
