@@ -1,5 +1,13 @@
 # SAC+AE implementaiton in PyTorch
 
+This is PyTorch implementation of SAC+AE from
+
+**Improving Sample Efficiency in Model-Free Reinforcement Learning from Images** by
+
+[Denis Yarats](https://cs.nyu.edu/~dy1042/), [Amy Zhang](https://mila.quebec/en/person/amy-zhang/), [Ilya Kostrikov](https://github.com/ikostrikov), [Brandon Amos](http://bamos.github.io/), [Joelle Pineau](https://www.cs.mcgill.ca/~jpineau/), and [Rob Fergus](https://cs.nyu.edu/~fergus/pmwiki/pmwiki.php).
+
+[[Paper]](https://arxiv.org/abs/1910.01741) [[Webpage]](https://sites.google.com/view/sac-ae/home)
+
 ## Requirements
 We assume you have access to a gpu that can run CUDA 9.2. Then, the simplest way to install all required dependencies is to create an anaconda environment by running:
 ```
