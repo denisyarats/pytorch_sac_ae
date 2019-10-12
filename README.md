@@ -1,4 +1,4 @@
-# SAC+AE implementaiton in PyTorch
+# SAC+AE implementation in PyTorch
 
 This is PyTorch implementation of SAC+AE from
 
