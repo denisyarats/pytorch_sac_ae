@@ -11,7 +11,7 @@ dependencies:
   - pip:
     - termcolor
     - git+git://github.com/deepmind/dm_control.git
-    - git+git://github.com/1nadequacy/dmc2gym.git
+    - git+git://github.com/denisyarats/dmc2gym.git
     - tb-nightly
     - imageio
     - imageio-ffmpeg
